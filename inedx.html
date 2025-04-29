@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EXIF Data Remover</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // Handle image preview
+    function previewImage(event) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        const preview = document.getElementById('preview');
+        preview.src = reader.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+
+    // Handle form submission and file upload
+    function uploadImage(event) {
+      event.preventDefault();
+
+      const formData = new FormData();
+      const imageFile = document.getElementById('image').files[0];
+      formData.append('image', imageFile);
+
+      fetch('http://127.0.0.1:5000/remove_exif', {  // Your Flask backend URL
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cleaned_image.jpg';
+        link.click();
+      })
+      .catch(error => console.error('Error uploading file:', error));
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>🔍 EXIF Data Remover</h2>
+    <form id="upload-form" onsubmit="uploadImage(event)">
+      <input type="file" id="image" name="image" accept="image/jpeg" onchange="previewImage(event)" required>
+      <img id="preview" class="hidden" alt="Image Preview">
+      <button type="submit">Remove EXIF & Download</button>
+    </form>
+  </div>
+</body>
+</html>
