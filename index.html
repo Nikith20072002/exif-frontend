@@ -7,13 +7,16 @@
   <script>
     // Handle image preview
     function previewImage(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
       const reader = new FileReader();
       reader.onload = function () {
         const preview = document.getElementById('preview');
         preview.src = reader.result;
-        preview.style.display = 'block';
+        preview.classList.remove('hidden');
       };
-      reader.readAsDataURL(event.target.files[0]);
+      reader.readAsDataURL(file);
     }
 
     // Handle form submission and file upload
@@ -21,14 +24,24 @@
       event.preventDefault();
 
       const formData = new FormData();
-      const imageFile = document.getElementById('image').files[0];
+      const imageFile = document.getElementById('image').files?.[0];
+      if (!imageFile) {
+        alert('Please select an image first.');
+        return;
+      }
+
       formData.append('image', imageFile);
 
       fetch('http://127.0.0.1:5000/remove_exif', {  // Your Flask backend URL
         method: 'POST',
         body: formData
       })
-      .then(response => response.blob())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status}`);
+        }
+        return response.blob();
+      })
       .then(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
